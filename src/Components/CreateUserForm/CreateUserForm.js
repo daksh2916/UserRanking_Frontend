@@ -3,59 +3,85 @@ import axios from 'axios';
 import './CreateUserForm.css'; 
 
 function CreateUserForm() {
-  const [name, setName] = useState('');
-  const [userId, setUserId] = useState('');
-  const [score, setScore] = useState('');
-  const [message, setMessage] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    userid: '',
+    score: ''
+  });
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validate name and score fields (optional)
-      if (!name.trim() || !score.trim()) {
-        setMessage('Name and score are required.');
-        return;
-      }
+      const response = await fetch('http://localhost:3000/api/v1/createuserscore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
 
-      // Convert userId to a number
-      const userIdNumber = Number(userId);
-
-      // Submit form if userId is a valid number
-      if (!isNaN(userIdNumber)) {
-        const today = new Date();
-        const createdAt = today.toISOString(); // Format: YYYY-MM-DDTHH:MM:SS.mmmZ
-        const updatedAt = today.toISOString();
-
-        await axios.post('http://localhost:3000/api/v1/createuserscore', { 
-          name, 
-          userId: userIdNumber, 
-          score,
-          createdAt,
-          updatedAt
+      if (response.ok) {
+        const data = await response.json();
+        setSuccessMessage(`User created successfully `);
+        setFormData({
+          name: '',
+          userid: '',
+          score: ''
         });
-        
-        setMessage('User created successfully.');
-        setName('');
-        setUserId('');
-        setScore('');
       } else {
-        setMessage('User ID must be a number.');
+        throw new Error('Failed to create user score');
       }
     } catch (error) {
-      setMessage('Failed to create user.');
+      console.error(error);
+      // Handle error
     }
   };
 
   return (
     <div className="form-container">
-      <h2>Create User Form</h2>
+      <h1>Create User Form</h1>
       <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <input type="number" placeholder="User ID" value={userId} onChange={(e) => setUserId(e.target.value)} />
-        <input type="number" placeholder="Score" value={score} onChange={(e) => setScore(e.target.value)} />
+        <label>
+          Name:
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </label>
+        <br />
+        <label>
+          User ID:
+          <input
+            type="number"
+            name="userid"
+            value={formData.userid}
+            onChange={handleChange}
+            required
+          />
+        </label>
+        <br />
+        <label>
+          Score:
+          <input
+            type="number"
+            name="score"
+            value={formData.score}
+            onChange={handleChange}
+            required
+          />
+        </label>
+        <br />
         <button type="submit">Submit</button>
       </form>
-      {message && <p className="message">{message}</p>}
+      {successMessage && <p>{successMessage}</p>}
     </div>
   );
 }
